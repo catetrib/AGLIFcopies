@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+
+<!-- 
+    020: 2 plot in riga	
+    021: plot 4 correnti
+    024: link ai repositori corretti
+
+    Exp piramidali
+    https://data-proxy.ebrains.eu/api/permalinks/b2b340d5-270d-42a7-99de-439eb6bd49f8
+    ExpInterneuroni
+    https://data-proxy.ebrains.eu/api/permalinks/0aa27cb1-e5bd-4865-8ca3-7086f9e83f87
+
+    Piramidali => neuronCopiesDatabase_par_2023_06_15_pyr.json
+    https://data-proxy.ebrains.eu/api/permalinks/a92a7bec-92d7-4db8-85ab-a530908da148
+    
+    Interneuroni All => neuronCopiesDatabase_par_2023_06_15_interneuroni.json
+    https://data-proxy.ebrains.eu/api/permalinks/8d604667-9117-4f0b-9142-b3ee9ff06a4b
+-->
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Neuron copies generator</title>
+
+    <style>
+        h1 {
+            text-align: left;
+            font-size: 1.5em;
+        }
+
+        h3 {
+            text-align: left;
+            font-size: 1.3em;
+        }
+
+        testo1 {
+            text-align: center;
+            font-size: 1.0em;
+        }
+    </style>
+
+
+    <!-- <script src="https://code.jquery.com/jquery-3.6.1.slim.min.js" integrity="sha256-w8CvhFs7iHNVUtnSP0YKEg00p9Ih13rlL9zGqvLdePA=" crossorigin="anonymous"></script>	-->
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
+
+</head>
+
+
+<body>
+
+
+    <!-- PAGE ELEMENTS	  ------------------------------------------------------------------------------      -->
+    <h1>Copies generation</h1>
+
+    <div class="subtitle">
+        <p> <b>Select database source </b></p>
+    </div>
+
+    <!--  Radio buttons ---------------------      -->
+    <form action="#" id="form1">
+        <p>
+            <label>
+            <input name="choice1" type="radio" id="allCopies" checked onclick="myFunc()"/>
+            <span>All copies</span>
+            </label>
+        </p>
+        <p>
+            <label>
+            <input name="choice1" type="radio" id="classifiedCopies" onclick="myFunc()"/>
+            <span>Classified copies</span>
+            </label>
+        </p>
+    </form>
+    <!--  free text      -->
+    <p id="textType"> Select all copies</p>
+    <br>
+
+    <div class="subtitle">
+        <p> <b>Select neuron type </b></p>
+    </div>    
+
+    <!--  Radio buttons ---------------------      -->
+    <form action="#" id="form2">
+        <p>
+            <label>
+            <input name="group1" type="radio" id="pyr" checked />
+            <span id="copiesCountPYR"> Pyramidal (max 374.000) </span>
+            </label>
+        </p>
+        <p>
+            <label>
+            <input name="group1" type="radio" id="bac"/>
+            <span id="copiesCountBAC">Interneuron bAC (max 47.100) </span>
+            </label>
+        </p>
+        <p>
+            <label>
+            <input name="group1" type="radio"  id="cac"/>
+            <span id="copiesCountCAC">Interneuron cAC (max 47.100)</span>
+            </label>
+        </p>
+        <p>
+            <label>
+            <input name="group1" type="radio" id="cnac"/>
+            <span id="copiesCountCNAC">Interneuron cNAC (max 47.100)</span>
+            </label>
+        </p>
+    </form>
+
+ 
+
+
+    <!-- define number of copies button  -->    
+    <h3>
+        <p>Define the number of copies</p>
+    </h3>
+
+    <input type="number" id="myNumber" value="5">
+
+    <button onclick="funcGetCopies()">Get Copies</button>
+    <br>
+
+   <!--  free text      -->
+   <p id="textChoice"></p>
+
+    <!--  Plot generated copies button ---------------------      -->
+    <br>
+    <button onclick="plotGeneratedCopies()">Plot copies</button>
+    <br>
+    <!--  free text      -->
+    <p id="text02"></p>
+   
+    <!--  Plot result     -->
+
+    <table>
+        <tr>
+            <td>
+                <div id = "plot400" ></div>
+            </td>
+            <td>    
+                <div id = "plot600" ></div>
+            </td>
+        </tr> 
+        <tr>
+            <td>
+                <div id = "plot800" ></div>
+            </td>
+            <td>    
+                <div id = "plot1000" ></div>
+            </td>
+        </tr>                           
+    </table>    
+    
+    <!--  Download button ---------------------      -->
+    <br>
+    <button onclick="saveGeneratedCopies()">Download JSON file</button>    
+
+
+    <!-- download experimental neurons param button  -->
+    <h5>
+        <p>Download experimental pyramidal parameters</p>
+    </h5>
+
+    <div class="buttons">
+    <button onclick="funcGetExperimNeuronsPyr()" hspace="50">Download all pyramidals</button>
+    <button onclick="funcGetExperimNeuronsInt()">Download all interneurons</button>
+    <br>    
+    </div>
+
+
+
+
+
+
+
+
+    <!-- SCRIPTS	  ------------------------------------------------------------------------------      -->
+    <script>
+        function getRadio(value) {
+            var radios = document.getElementsByName(value);
+            var radioChoice = document.getElementsByName(value);
+            for (var i = 0, length = radios.length; i < length; i++) {
+                if (radios[i].checked) {
+                    radioChoice = radios[i].value;
+                    break;
+                }
+            }
+            console.log(radioChoice);
+            return radioChoice;
+        }
+
+        function popup(form) {
+            lockView();
+            freezeRadio();
+            var pop = window.open('', 'proc');
+            form.target = 'proc';
+            stat = document.getElementById("status");
+            stat.style.visibility = "visible";
+            stat.innerHTML = "<h2> Waiting... </h2>";
+            document.getElementById("title").innerHTML = "<title>Waiting...</title>";
+            setTimeout(function () { pop.close(); }, 2000);
+        }
+
+    </script>
+    <script>
+        
+        function funcGetExperimNeuronsPyr(){
+            
+            var originalNeuronsNames = '';
+            
+            // retrieve JSON file
+            myURL = 'https://data-proxy.ebrains.eu/api/permalinks/b2b340d5-270d-42a7-99de-439eb6bd49f8'
+            $.getJSON(myURL, function (data) {
+                originalNeuronsNames = Object.keys(data)
+                return (originalNeuronsNames)
+            });
+
+
+            // DOWNLOAD
+            //Convert JSON string to BLOB.
+            var json = JSON.stringify(originalNeuronsNames);
+            json = [json];
+            var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+            //console.log(blob1);
+            //Check the Browser.
+            var isIE = false || !!document.documentMode;
+            if (isIE) {
+                window.navigator.msSaveBlob(blob1, "OriginalPyramidals.json");
+            } else {
+                var url = window.URL || window.webkitURL;
+                link = url.createObjectURL(blob1);
+                var a = document.createElement("a");
+                a.download = "OriginalPyramidals.json";
+                a.href = link;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        function funcGetExperimNeuronsInt(){
+
+            var originalNeuronsNames = '';
+            
+            // retrieve JSON file
+            myURL = 'https://data-proxy.ebrains.eu/api/permalinks/0aa27cb1-e5bd-4865-8ca3-7086f9e83f87'
+            $.getJSON(myURL, function (data) {
+                originalNeuronsNames = Object.keys(data)
+                return (originalNeuronsNames)
+            });
+
+            // DOWNLOAD
+            //Convert JSON string to BLOB.
+            var json = JSON.stringify(originalNeuronsNames);
+            json = [json];
+            var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+            //console.log(blob1);
+            //Check the Browser.
+            var isIE = false || !!document.documentMode;
+            if (isIE) {
+                window.navigator.msSaveBlob(blob1, "OriginalInterneurons.json");
+            } else {
+                var url = window.URL || window.webkitURL;
+                link = url.createObjectURL(blob1);
+                var a = document.createElement("a");
+                a.download = "OriginalInterneurons.json";
+                a.href = link;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }        
+
+
+        // gestione tipologia di copie richiesta
+        function myFunc(){
+            var form1 = document.getElementById('form1');
+
+            if (form1.allCopies.checked) {
+                    document.getElementById("textType").innerHTML = 'Select all copies';
+                    document.getElementById("copiesCountPYR").innerHTML = 'Pyramidal (max 1,023,140)';
+                    document.getElementById("copiesCountBAC").innerHTML = 'Interneuron bAC (max 45.192)';
+                    document.getElementById("copiesCountCAC").innerHTML = 'Interneuron cAC (max 58,562)';
+                    document.getElementById("copiesCountCNAC").innerHTML = 'Interneuron cNAC (max 52,028)';
+                }
+            else{
+                document.getElementById("textType").innerHTML = 'Select only classified copies';
+                document.getElementById("copiesCountPYR").innerHTML = 'Pyramidal (max 948,942)';
+                document.getElementById("copiesCountBAC").innerHTML = 'Interneuron bAC (max 26,076)';
+                document.getElementById("copiesCountCAC").innerHTML = 'Interneuron cAC (max 58,436)';
+                document.getElementById("copiesCountCNAC").innerHTML = 'Interneuron cNAC (max 51,500)';
+            }
+        }
+
+
+        var selectedCopies = '';
+        var origNeurons = '';
+
+        function funcGetCopies() {
+            var myURL = '';
+            var form1 = document.getElementById('form1'); //Choice
+            var form = document.getElementById('form2'); // Type
+
+            if (form.pyr.checked) {
+                document.getElementById("textChoice").innerHTML = 'PYR';
+
+                if (form1.allCopies.checked) {
+                    myURL = 'https://data-proxy.ebrains.eu/api/permalinks/3ece24ca-81ab-4e34-a816-217aa38db9f2'
+                }
+                else{ // only classified neurons
+                    myURL = 'https://data-proxy.ebrains.eu/api/permalinks/3ece24ca-81ab-4e34-a816-217aa38db9f2' //to be changed
+                }
+                
+                         
+                console.log('pyr')
+
+                // get JSON file
+                $.getJSON(myURL, function (data) {
+
+                    var x = document.getElementById("myNumber").value;
+
+                    // list of all the keys in JSON file
+                    var keys = Object.keys(data);
+
+                    const selectedKeys = [];
+                    // random selection of keys
+                    for (let i = 0; i < x; i++) {
+                        const random1 = Math.floor(Math.random() * keys.length);
+                        selectedKeys[i] = keys[random1]
+                    }
+
+                    //acquisizione delle righe corrispondenti
+                    selectedCopies = Object.keys(data)
+                        .filter(key => selectedKeys.includes(key))
+                        .reduce((obj, key) => {
+                            obj[key] = data[key];
+                            return obj;
+                        }, {});
+
+                    // per scrivere le chiavi risultanti
+                    document.getElementById("textChoice").innerHTML = 'copies retreived';
+
+                    return (selectedCopies)
+
+            });
+            }
+
+            else { //interneurons
+                document.getElementById("textChoice").innerHTML = 'retrieving copies...';
+                
+                    
+                if (form1.allCopies.checked) {
+                    myURL = 'https://data-proxy.ebrains.eu/api/permalinks/8d604667-9117-4f0b-9142-b3ee9ff06a4b'
+                }
+                else{ // only classified neurons
+                    myURL = 'https://data-proxy.ebrains.eu/api/permalinks/8d604667-9117-4f0b-9142-b3ee9ff06a4b' //to be changed
+                }                
+                console.log('int')
+                var userSelection = '';
+
+                if (form.bac.checked) {userSelection = "BAC"};
+                if (form.cac.checked) {userSelection = "CAC"};
+                if (form.cnac.checked) {userSelection = "CNAC"};
+
+                // get JSON file
+                $.getJSON(myURL, function (data) {
+
+                    var x = document.getElementById("myNumber").value;
+
+                    // list of all the keys in JSON file
+                    var keys = Object.keys(data);                    
+
+                    //acquisizione delle righe della tipologia
+                    copiesType = Object.keys(data)
+                        .filter(key => data[key].type==userSelection)
+                        .reduce((obj, key) => {
+                            obj[key] = data[key];
+                            return obj;
+                        }, {});
+
+                    // generazione delle chiavi random
+                    var keysOfSelType = Object.keys(copiesType);
+                    const selectedKeys = [];
+                    // random selection of keys
+                    for (let i = 0; i < x; i++) {
+                        const random1 = Math.floor(Math.random() * keysOfSelType.length);
+                        selectedKeys[i] = keysOfSelType[random1]
+                    }                    
+                    console.log(keysOfSelType.length)
+
+                    //acquisizione delle righe corrispondenti
+                    selectedCopies = Object.keys(copiesType)
+                        .filter(key => selectedKeys.includes(key))
+                        .reduce((obj, key) => {
+                            obj[key] = copiesType[key];
+                            return obj;
+                        }, {});            
+                                  
+                    console.log(selectedCopies)
+                    
+                    // text
+                    document.getElementById("textChoice").innerHTML = 'copies retreived';
+
+                    return (selectedCopies)
+
+            });
+            }
+
+
+
+        }
+
+        function getRandomArbitrary(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function saveGeneratedCopies() {
+            // DOWNLOAD
+            //Convert JSON string to BLOB.
+            var json = JSON.stringify(selectedCopies);
+            json = [json];
+            var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+            //console.log(blob1);
+            //Check the Browser.
+            var isIE = false || !!document.documentMode;
+            if (isIE) {
+                window.navigator.msSaveBlob(blob1, "Copies.json");
+            } else {
+                var url = window.URL || window.webkitURL;
+                link = url.createObjectURL(blob1);
+                var a = document.createElement("a");
+                a.download = "Copies.json";
+                a.href = link;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+
+        function generateRandomColor()
+        {
+            var randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
+            return randomColor;
+        }
+
+        function plotGeneratedCopies() {
+
+            //document.getElementById("text02").innerHTML = 'Spike Times';
+            const arrayRange = (start, stop, step) =>
+                Array.from(
+                { length: (stop - start) / step + 1 },
+                (value, index) => start + index * step
+                );
+
+
+            var layout400 = {
+                width: 600, height: 450,
+                title:'<b># Spike Times @400pA</b>',
+                xaxis: {title: '<b>time (ms)</b>'}, yaxis: {title: '<b># spikes</b>'}  ,
+                showlegend: false,        
+            };
+
+            var layout600 = {
+                width: 600, height: 450,
+                title:'<b># Spike Times @600pA</b>',
+                xaxis: {title: '<b>time (ms)</b>'}, yaxis: {title: '<b># spikes</b>'}  ,
+                showlegend: false,        
+            };
+
+            var layout800 = {
+                width: 600, height: 450,
+                title:'<b># Spike Times @800pA</b>',
+                xaxis: {title: '<b>time (ms)</b>'}, yaxis: {title: '<b># spikes</b>'}  ,
+                showlegend: false,        
+            };
+
+            var layout1000 = {
+                width: 600, height: 450,
+                title:'<b># Spike Times @1000pA</b>',
+                xaxis: {title: '<b>time (ms)</b>'}, yaxis: {title: '<b># spikes</b>'}  ,
+                showlegend: false,        
+            };                                   
+
+
+            var form = document.getElementById('form2');
+            if (form.pyr.checked) {
+                // BOUNDARIES 05/08/22
+                var trace400max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [0.5, 3.10672, 4.64131, 5.89071, 6.98331, 7.97192, 8.88467, 9.73871,10.5455, 11.313, 12.0472, 12.7528, 13.4332, 14.0914, 14.7297,15.3501, 15.9541, 16.5433, 17.1188, 17.6817, 18.2329],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace400min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.0829, 1.1809, 1.2789, 1.3769,1.4749, 1.5729, 1.6709, 1.7689, 1.8669, 1.9649],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };   
+
+                var trace600max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1.28, 3.35891, 4.76796, 5.9761, 7.06873, 8.08244, 9.03726, 9.94564,10.816, 11.6545, 12.4656, 13.2527, 14.0188, 14.766, 15.4961, 16.2109,16.9115, 17.5992, 18.2748, 18.9393, 19.5934],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace600min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                }; 
+                
+                var trace800max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1.4, 3.55162, 4.98993, 6.2168, 7.32266, 8.34608, 9.30811, 10.2218,11.0961, 11.9373, 12.75, 13.538, 14.3042, 15.0509, 15.7801, 16.4933,17.192, 17.8773, 18.5502, 19.2117, 19.8625],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace800min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1, 1, 1.09045, 1.26393, 1.41609, 1.55175, 1.67427,1.78604, 1.88887, 1.98413, 2.07289, 2.15602, 2.23422, 2.30805,2.37801, 2.44448, 2.50782],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };   
+
+                var trace1000max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1.43, 3.88014, 5.54081, 6.96469, 8.25243, 9.44716, 10.5725, 11.6431,12.6689, 13.6571, 14.613, 15.5407, 16.4436, 17.3242, 18.1847,19.0271, 19.8529, 20.6633, 21.4596, 22.2427, 23.0137],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace1000min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1.35241, 1.79836, 2.14609, 2.43124, 2.673, 2.88287, 3.06833,3.23447, 3.38496, 3.5225, 3.64916, 3.76653, 3.87589, 3.97827, 4.0745,4.16529, 4.25123, 4.33279],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                }; 
+            }
+            else{
+                //console.log(arrayRange(1, dataToPlot.length, 1)); // [1,2,3,4,5]
+                // BOUNDARIES 05/08/22
+                var trace400max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [3.34, 6.14, 8.94, 11.74, 14.54, 17.34, 20.14, 22.94, 25.74, 28.54, 31.34, 34.14, 36.94, 39.74, 42.54, 45.34, 48.14, 50.94, 53.74, 56.54,59.34],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace400min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };   
+
+                var trace600max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [3.2, 7.2, 11.2, 15.2, 19.2, 23.2, 27.2, 31.2, 35.2, 39.2, 43.2, 47.2, 51.2, 55.2, 59.2, 63.2, 67.2, 71.2, 75.2, 79.2,83.2],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace600min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                }; 
+                
+                var trace800max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [4.22, 8.62, 13.02, 17.42, 21.82, 26.22, 30.62, 35.02, 39.42, 43.82, 48.22, 52.62, 57.02, 61.42, 65.82, 70.22, 74.62, 79.02, 83.42, 87.82, 92.22],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace800min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1, 1, 1.19974, 1.61698, 1.9655, 2.26555, 2.52948, 2.76539, 2.9789, 3.17408, 3.35397, 3.52089, 3.67667, 3.82277, 3.96039, 4.09049, 4.2139, 4.3313, 4.44328],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };   
+
+                var trace1000max = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [5.135, 7.835, 10.535, 13.235, 15.935, 18.635, 21.335, 24.035, 26.735, 29.435, 32.135, 34.835, 37.535, 40.235, 42.935, 45.635, 48.335, 51.035, 53.735, 56.435, 59.135],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };
+                var trace1000min = {                
+                    x: [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381,401],
+                    y: [1, 1, 1.01111, 1.23331, 1.45551, 1.67771, 1.89991, 2.12211, 2.34431, 2.56651, 2.78871, 3.01091, 3.23311, 3.45531, 3.67751, 3.89971, 4.12191, 4.34411, 4.56631, 4.78851, 5.01071],
+                    name: 'Bound',
+                    mode: 'lines',
+                    marker: {color: 'gray'},
+                    type: 'scatter',
+                };    
+            }            
+            
+            
+
+            var keys = Object.keys(selectedCopies);
+            var dataToPlot = [];
+            var nameString = [];
+            var trace = [];
+            var valori = [];
+            var colori = [];
+
+            for (let i = 0; i < keys.length; i++) {
+                colori[i] = generateRandomColor();
+            }
+
+            //colori = generateRandomColor()
+            totDataToPlot = Math.min(keys.length,90)
+            console.log(totDataToPlot)
+            //400
+            for (let j=0;j<keys.length;j++){
+                //console.log(keys[j])
+                dataToPlot[j] = selectedCopies[keys[j]]["spike_times_sim"]["400"];
+                nameString[j] = selectedCopies[keys[j]]['name'];
+
+                valori[j] = [];
+                for (let i = 0; i < dataToPlot[j].length; i++) {
+                    //console.log(parseFloat(dataToPlot[j][i]))
+                    valori[j][i] = parseFloat(dataToPlot[j][i]);
+                }
+
+                trace[j] = {
+                    x: valori[j],
+                    y: arrayRange(1, dataToPlot[j].length, 1),
+                    //name: name1,
+                    mode: 'lines+markers',
+                    marker: {color: colori[j]},//generateRandomColor()},//{color: 'black'},//lista
+                    type: 'scatter',
+                };
+
+                var data400 = [].concat([trace400max], trace,[trace400min]); 
+            };
+
+            //600
+            for (let j=0;j<keys.length;j++){
+                //console.log(keys[j])
+                dataToPlot[j] = selectedCopies[keys[j]]["spike_times_sim"]["600"];
+                nameString[j] = selectedCopies[keys[j]]['name'];
+
+                valori[j] = [];
+                for (let i = 0; i < dataToPlot[j].length; i++) {
+                    //console.log(parseFloat(dataToPlot[j][i]))
+                    valori[j][i] = parseFloat(dataToPlot[j][i]);
+                }
+
+                trace[j] = {
+                    x: valori[j],
+                    y: arrayRange(1, dataToPlot[j].length, 1),
+                    //name: name1,
+                    mode: 'lines+markers',
+                    marker: {color: colori[j]},//generateRandomColor()},//{color: 'black'},//lista
+                    type: 'scatter',
+                };
+
+                var data600 = [].concat([trace600max], trace,[trace600min]); 
+            };   
+            
+            //800
+            for (let j=0;j<keys.length;j++){
+                //console.log(keys[j])
+                dataToPlot[j] = selectedCopies[keys[j]]["spike_times_sim"]["800"];
+                nameString[j] = selectedCopies[keys[j]]['name'];
+
+                valori[j] = [];
+                for (let i = 0; i < dataToPlot[j].length; i++) {
+                    //console.log(parseFloat(dataToPlot[j][i]))
+                    valori[j][i] = parseFloat(dataToPlot[j][i]);
+                }
+
+                trace[j] = {
+                    x: valori[j],
+                    y: arrayRange(1, dataToPlot[j].length, 1),
+                    //name: name1,
+                    mode: 'lines+markers',
+                    marker: {color: colori[j]},//generateRandomColor()},//{color: 'black'},//lista
+                    type: 'scatter',
+                };
+
+                var data800 = [].concat([trace800max], trace,[trace800min]); 
+            };   
+            
+            //1000
+            for (let j=0;j<keys.length;j++){
+                //console.log(keys[j])
+                dataToPlot[j] = selectedCopies[keys[j]]["spike_times_sim"]["1000"];
+                nameString[j] = selectedCopies[keys[j]]['name'];
+
+                valori[j] = [];
+                for (let i = 0; i < dataToPlot[j].length; i++) {
+                    //console.log(parseFloat(dataToPlot[j][i]))
+                    valori[j][i] = parseFloat(dataToPlot[j][i]);
+                }
+
+                trace[j] = {
+                    x: valori[j],
+                    y: arrayRange(1, dataToPlot[j].length, 1),
+                    //name: name1,
+                    mode: 'lines+markers',
+                    marker: {color: colori[j]},//generateRandomColor()},//{color: 'black'},//lista
+                    type: 'scatter',
+                };
+
+                var data1000 = [].concat([trace1000max], trace,[trace1000min]); 
+            };            
+            
+            Plotly.newPlot('plot400', data400, layout400);
+            Plotly.newPlot('plot600', data600, layout600);
+            Plotly.newPlot('plot800', data800, layout800);
+            Plotly.newPlot('plot1000', data1000, layout1000);
+            
+
+
+
+        }
+ 
+
+
+    </script>
+
+
+
+
+
+
+</body>
+
+</html>
