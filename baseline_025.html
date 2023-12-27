@@ -206,7 +206,7 @@
 
     </script>
     <script>
-        
+        var myData = null;
         function funcGetExperimNeuronsPyr(){
             
             var originalNeuronsNames = '';
@@ -215,32 +215,35 @@
             myURL = 'https://data-proxy.ebrains.eu/api/permalinks/b2b340d5-270d-42a7-99de-439eb6bd49f8'
             $.getJSON(myURL, function (data) {
                 originalNeuronsNames = Object.keys(data)
-                return (originalNeuronsNames)
+                myData = data;
+                //return (originalNeuronsNames)
+            
+
+
+                // DOWNLOAD
+                //Convert JSON string to BLOB.
+                var json = JSON.stringify(myData);
+                json = [json];
+                var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+                //console.log(blob1);
+                //Check the Browser.
+                var isIE = false || !!document.documentMode;
+                if (isIE) {
+                    window.navigator.msSaveBlob(blob1, "OriginalPyramidals.json");
+                } else {
+                    var url = window.URL || window.webkitURL;
+                    link = url.createObjectURL(blob1);
+                    var a = document.createElement("a");
+                    a.download = "OriginalPyramidals.json";
+                    a.href = link;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
             });
-
-
-            // DOWNLOAD
-            //Convert JSON string to BLOB.
-            var json = JSON.stringify(originalNeuronsNames);
-            json = [json];
-            var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
-            //console.log(blob1);
-            //Check the Browser.
-            var isIE = false || !!document.documentMode;
-            if (isIE) {
-                window.navigator.msSaveBlob(blob1, "OriginalPyramidals.json");
-            } else {
-                var url = window.URL || window.webkitURL;
-                link = url.createObjectURL(blob1);
-                var a = document.createElement("a");
-                a.download = "OriginalPyramidals.json";
-                a.href = link;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
         }
 
+        var myData = null;
         function funcGetExperimNeuronsInt(){
 
             var originalNeuronsNames = '';
@@ -249,29 +252,31 @@
             myURL = 'https://data-proxy.ebrains.eu/api/permalinks/0aa27cb1-e5bd-4865-8ca3-7086f9e83f87'
             $.getJSON(myURL, function (data) {
                 originalNeuronsNames = Object.keys(data)
-                return (originalNeuronsNames)
-            });
+                myData = data;
+                //return (originalNeuronsNames)
+            
 
-            // DOWNLOAD
-            //Convert JSON string to BLOB.
-            var json = JSON.stringify(originalNeuronsNames);
-            json = [json];
-            var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
-            //console.log(blob1);
-            //Check the Browser.
-            var isIE = false || !!document.documentMode;
-            if (isIE) {
-                window.navigator.msSaveBlob(blob1, "OriginalInterneurons.json");
-            } else {
-                var url = window.URL || window.webkitURL;
-                link = url.createObjectURL(blob1);
-                var a = document.createElement("a");
-                a.download = "OriginalInterneurons.json";
-                a.href = link;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+                // DOWNLOAD
+                //Convert JSON string to BLOB.
+                var json = JSON.stringify(myData);
+                json = [json];
+                var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+                //console.log(blob1);
+                //Check the Browser.
+                var isIE = false || !!document.documentMode;
+                if (isIE) {
+                    window.navigator.msSaveBlob(blob1, "OriginalInterneurons.json");
+                } else {
+                    var url = window.URL || window.webkitURL;
+                    link = url.createObjectURL(blob1);
+                    var a = document.createElement("a");
+                    a.download = "OriginalInterneurons.json";
+                    a.href = link;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
         }        
 
 
